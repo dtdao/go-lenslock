@@ -10,7 +10,6 @@ import (
 var homeTemplate *template.Template
 var contatctTemplate *template.Template
 
-
 func home(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "text/html")
 	if err := homeTemplate.Execute(w, nil); err != nil {
@@ -27,11 +26,11 @@ func contact(w http.ResponseWriter, r *http.Request){
 
 func main() {
 	var err error
-	homeTemplate, err = template.ParseFiles("views/home.gohtml")
+	homeTemplate, err = template.ParseFiles("views/home.gohtml", "views/layouts/footer.gohtml")
 	if err != nil {
 		panic(err)
 	}
-	contatctTemplate, err = template.ParseFiles("views/contact.gohtml")
+	contatctTemplate, err = template.ParseFiles("views/contact.gohtml", "views/layouts/footer.gohtml")
 	if err != nil {
 		panic(err)
 	}
