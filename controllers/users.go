@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/schema"
 	"lenslocked.com/views"
 )
 
@@ -29,21 +28,15 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request)  {
 
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request){
-	if err := r.ParseForm(); err != nil {
-		panic(err)
-	}
-
-	dec := schema.NewDecoder()
-
 	var form SignupForm
-
-	if err := dec.Decode(&form, r.PostForm); err != nil {
+	if err := parseForm(r, &form);  err != nil {
 		panic(err)
 	}
+
 	fmt.Fprintln(w, form)
 
 	// fmt.Fprintln(w, r.PostForm["email"])
 	// fmt.Fprintln(w, r.PostForm["password"])
 
-	fmt.Fprintln(w, "This is a fake messgae. Presend that we created a user")
+	// fmt.Fprintln(w, "This is a fake messgae. Presend that we created a user")
 }
