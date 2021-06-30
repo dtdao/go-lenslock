@@ -1,31 +1,60 @@
 package main
 
 import (
-	"html/template"
-	"os"
+	"fmt"
+
+	"lenslocked.com/models"
+)
+
+const (
+	host = "localhost"
+	port = 5432
+	user = "dong"
+	password = "password"
+	dbname = "lenslocked_dev"
 )
 
 func main() {
-	t, err := template.ParseFiles("hello.gohtml")
+
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+ host, port, user, password, dbname)
+
+
+	us, err := models.NewUserService(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 
-	data := struct {
-		Name   string
-		Place  string
-		Time   int
-		Nested struct {
-			Name  string
-			Level int
-		}
-	}{Name: "John Smith", Place: "Tokyo", Nested: struct {
-		Name  string
-		Level int
-	}{"TEST", 3}}
+	// us.DestructiveReset()
+	user, err := us.ById(2)
 
-	err = t.Execute(os.Stdout, data)
+ 
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println(user)
+
+	// t, err := template.ParseFiles("hello.gohtml")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// data := struct {
+	// 	Name   string
+	// 	Place  string
+	// 	Time   int
+	// 	Nested struct {
+	// 		Name  string
+	// 		Level int
+	// 	}
+	// }{Name: "John Smith", Place: "Tokyo", Nested: struct {
+	// 	Name  string
+	// 	Level int
+	// }{"TEST", 3}}
+
+	// err = t.Execute(os.Stdout, data)
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
