@@ -35,6 +35,11 @@ func NewUserService(connectionInfo string) (*UserService, error){
 	}, nil
 }
 
+func (us *UserService) CreateUser(user *User) error{
+	
+	return us.db.Create(user).Error
+}
+
 
 func (us *UserService) ById(id uint) (*User, error) {
 	var user User
