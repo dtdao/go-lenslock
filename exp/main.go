@@ -25,21 +25,36 @@ func main() {
 		panic(err)
 	}
 
-	// us.DestructiveReset()
-	// user := models.User {
-	// 	Name: "Michael Scott",
-	// 	Email:  "michael@dunermifflin.com",
-	// }
-	// if err := us.CreateUser(&user); err != nil {
-	// 	panic(err)
-	// }
-	user, err := us.ById(1)
- 
+	us.DestructiveReset()
+	user := models.User {
+		Name: "Michael Scott",
+		Email:  "michael@dunermifflin.com",
+	}
+	if err := us.CreateUser(&user); err != nil {
+		panic(err)
+	}
+	
+	user.Email = "michael@michaelscottpaperco.com"
+	if err := us.Update(&user); err != nil {
+		panic(err)
+	}
+
+	// userByEmail, err := us.ByEmail("michael@michaelscottpaperco.com") 
+	// userById, err := us.ById(user.ID) 
+
+	if err := us.Delete(user.ID); err != nil {
+		panic(err)
+	}
+
+	userById, err := us.ById(user.ID)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(user)
+
+
+	// fmt.Println(userByEmail)
+	fmt.Println(userById)
 
 	// t, err := template.ParseFiles("hello.gohtml")
 	// if err != nil {
