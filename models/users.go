@@ -29,6 +29,15 @@ func (us *UserService) Update(user *User) error {
 	return us.db.Save(user).Error
 }
 
+func (us *UserService) AutoMigrate() error {
+	err := us.db.Migrator().DropTable(&User{}).Error()
+	if len(err) != 0 {
+		return errors.New(err)
+	}
+	us.db.AutoMigrate(&User{})
+	return nil
+}
+
 func (us *UserService) ByEmail(email string) (*User, error) {
 	var user User
 	db := us.db.Where("email = ?", email)
