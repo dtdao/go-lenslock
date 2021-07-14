@@ -28,10 +28,17 @@ func main() {
 	}
 	defer us.Close()
 	// us.DestructiveReset();
-	us.AutoMigrate()
+	// us.AutoMigrate()
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(us)
 	galleriesC := controllers.NewGallery()
+
+	userByAge, err := us.InAgeRange(99, 100); 
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(userByAge)
+
 
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")

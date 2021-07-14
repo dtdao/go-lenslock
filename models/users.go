@@ -30,10 +30,10 @@ func (us *UserService) Update(user *User) error {
 }
 
 func (us *UserService) AutoMigrate() error {
-	err := us.db.Migrator().DropTable(&User{}).Error()
-	if len(err) != 0 {
-		return errors.New(err)
-	}
+	us.db.Migrator().DropTable(&User{})
+	// if len(err) != 0 {
+	// 	return errors.New(err)
+	// }
 	us.db.AutoMigrate(&User{})
 	return nil
 }
@@ -45,6 +45,20 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 	return &user, err
 }
 
+func (us *UserService) ByAge(age uint8) (*User, error) {
+	var user User
+	db := us.db.Where("age = ?", age)
+	err := first(db, &user)
+	return &user, err
+}
+
+
+func (us *UserService) InAgeRange(min uint8, max uint8) ([]User, error){
+	var users []User
+	db := us.db.Where("age >= ? AND age <= ?", min, max).Find(&users)
+	err := all(db, &users)
+	return users, err
+}
 
 func NewUserService(connectionInfo string) (*UserService, error){
 	db, err := gorm.Open(postgres.Open(connectionInfo),&gorm.Config{
@@ -81,6 +95,15 @@ func first(db *gorm.DB, dst interface{}) error {
 	return err
 }
 
+func all(db *gorm.DB, dst interface{}) error {
+	err := db.Find(dst).Error
+	if err == gorm.ErrRecordNotFound {
+		return ErrorNotFound
+	}
+	return err
+}
+
+
 func (us *UserService) ById(id uint) (*User, error) {
 	var user User
 	db := us.db.Where("id = ?", id)
@@ -96,4 +119,5 @@ type User struct {
 	gorm.Model
 	Name string
 	Email string `gorm:"not null; unique_index"`
+	Age uint8
 }

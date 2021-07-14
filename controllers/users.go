@@ -17,6 +17,7 @@ type SignupForm struct {
 	Email string `schema:"email"`
 	Password string `schema:"password"`
 	Name string `schema:"name"`
+	Age uint `schema:"age"`
 }
 
 func NewUsers(us *models.UserService) *Users{
@@ -41,6 +42,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request){
 	user := models.User{
 		Name: form.Name,
 		Email: form.Email,
+		Age: uint8(form.Age),
 	}
 
 	if err := u.us.CreateUser(&user); err != nil {
