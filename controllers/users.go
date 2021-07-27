@@ -43,6 +43,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request){
 		Name: form.Name,
 		Email: form.Email,
 		Age: uint8(form.Age),
+		Password: form.Password,
 	}
 
 	if err := u.us.CreateUser(&user); err != nil {
@@ -50,7 +51,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	fmt.Fprintln(w, form)
+	fmt.Fprintln(w, user)
 
 	// fmt.Fprintln(w, r.PostForm["email"])
 	// fmt.Fprintln(w, r.PostForm["password"])
