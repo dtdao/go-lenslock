@@ -13,6 +13,8 @@ var  (
 	ErrorInvalidId = errors.New("models: ID provided is invalid")
 )
 
+const userPwPepper = "randomPepperForThePizza"
+
 type UserService struct {
 	db *gorm.DB
 }
@@ -75,7 +77,8 @@ func NewUserService(connectionInfo string) (*UserService, error){
 }
 
 func (us *UserService) CreateUser(user *User) error{
-	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	pwBytes := []byte(user.Password + userPwPepper)
+	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
