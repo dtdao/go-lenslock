@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -74,7 +75,12 @@ func NewUserService(connectionInfo string) (*UserService, error){
 }
 
 func (us *UserService) CreateUser(user *User) error{
-	
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.PasswordHash = string(hashedBytes)
+	user.Password = ""
 	return us.db.Create(user).Error
 }
 
@@ -120,4 +126,6 @@ type User struct {
 	Name string
 	Email string `gorm:"not null; unique_index"`
 	Age uint8
+	Password string `gorm:"-"`
+	PasswordHash string `gorm:"not null"`
 }
