@@ -11,6 +11,8 @@ import (
 var  (
 	ErrorNotFound = errors.New("models: resource not found")
 	ErrorInvalidId = errors.New("models: ID provided is invalid")
+	ErrorInvalidPassword  = errors.New("modals: Incorrect password provided")
+	//ErrorInvalidEmail = errors.New("models: Incorerect email provided")
 )
 
 const userPwPepper = "randomPepperForThePizza"
@@ -46,6 +48,25 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 	db := us.db.Where("email = ?", email)
 	err := first(db, &user)
 	return &user, err
+}
+
+func (us *UserService) Authenticate(email, password string) (*User, error){
+	foundUser, err := us.ByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(foundUser.PasswordHash), []byte(password+userPwPepper))
+
+	if err != nil {
+		switch err {
+		case bcrypt.ErrMismatchedHashAndPassword:
+			return nil, ErrorInvalidPassword
+		default:
+			return nil, err
+		}
+	}
+
+	return foundUser, nil
 }
 
 func (us *UserService) ByAge(age uint8) (*User, error) {
@@ -130,5 +151,5 @@ type User struct {
 	Email string `gorm:"not null; unique_index"`
 	Age uint8
 	Password string `gorm:"-"`
-	PasswordHash string `gorm:"not null"`
+	PasswordHash string `gorm:"size:60; not null"`
 }
