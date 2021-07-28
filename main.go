@@ -27,7 +27,7 @@ func main() {
 		panic(err)
 	}
 	defer us.Close()
-	// us.DestructiveReset();
+	//us.DestructiveReset();
 	//us.AutoMigrate()
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(us)
@@ -45,9 +45,12 @@ func main() {
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.Handle("/faq", staticC.Faq).Methods("GET")
 	r.Handle("/galleries/new", galleriesC.NewGallery).Methods("GET")
+	r.Handle("/login", usersC.LoginView).Methods("GET")
+
 	// r.HandleFunc("/faq", faq).Methods("GET")
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
+	r.HandleFunc("/login", usersC.Login).Methods("POST")
 	http.ListenAndServe(":3000", r)
 }
 
