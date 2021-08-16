@@ -6,31 +6,38 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"lenslocked.com/hash"
+	"lenslocked.com/rand"
 )
 
-var  (
-	ErrorNotFound = errors.New("models: resource not found")
-	ErrorInvalidId = errors.New("models: ID provided is invalid")
-	ErrorInvalidPassword  = errors.New("modals: Incorrect password provided")
+var (
+	ErrorNotFound        = errors.New("models: resource not found")
+	ErrorInvalidId       = errors.New("models: ID provided is invalid")
+	ErrorInvalidPassword = errors.New("modals: Incorrect password provided")
 	//ErrorInvalidEmail = errors.New("models: Incorerect email provided")
 )
 
 const userPwPepper = "randomPepperForThePizza"
+const hmacSecretKey = "secret-hmac-key"
 
 type UserService struct {
-	db *gorm.DB
+	db   *gorm.DB
+	hmac hash.HMAC
 }
 
-func (us *UserService) Test() string{
+func (us *UserService) Test() string {
 	return "hello"
 }
 
-func (us *UserService) DestructiveReset()  {
+func (us *UserService) DestructiveReset() {
 	us.db.Migrator().DropTable(&User{})
 	us.db.AutoMigrate(&User{})
 }
 
 func (us *UserService) Update(user *User) error {
+	if user.Remember != "" {
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
 	return us.db.Save(user).Error
 }
 
@@ -50,7 +57,18 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 	return &user, err
 }
 
-func (us *UserService) Authenticate(email, password string) (*User, error){
+// ByRemember looks up a user with a given remember token
+func (us *UserService) ByRemember(token string) (*User, error) {
+	var user User
+	hashedToken := us.hmac.Hash(token)
+	err := first(us.db.Where("remember_hash = ?", hashedToken), &user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (us *UserService) Authenticate(email, password string) (*User, error) {
 	foundUser, err := us.ByEmail(email)
 	if err != nil {
 		return nil, err
@@ -76,28 +94,29 @@ func (us *UserService) ByAge(age uint8) (*User, error) {
 	return &user, err
 }
 
-
-func (us *UserService) InAgeRange(min uint8, max uint8) ([]User, error){
+func (us *UserService) InAgeRange(min uint8, max uint8) ([]User, error) {
 	var users []User
 	db := us.db.Where("age >= ? AND age <= ?", min, max).Find(&users)
 	err := all(db, &users)
 	return users, err
 }
 
-func NewUserService(connectionInfo string) (*UserService, error){
-	db, err := gorm.Open(postgres.Open(connectionInfo),&gorm.Config{
+func NewUserService(connectionInfo string) (*UserService, error) {
+	db, err := gorm.Open(postgres.Open(connectionInfo), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
-	} )
+	})
+	hmac := hash.NewHMAC(hmacSecretKey)
 	if err != nil {
 		panic(err)
 	}
 
 	return &UserService{
-		db: db,
+		db:   db,
+		hmac: hmac,
 	}, nil
 }
 
-func (us *UserService) CreateUser(user *User) error{
+func (us *UserService) CreateUser(user *User) error {
 	pwBytes := []byte(user.Password + userPwPepper)
 	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err != nil {
@@ -105,17 +124,30 @@ func (us *UserService) CreateUser(user *User) error{
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+	if user.Remember == ""{
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+	}
+	user.RememberHash = us.hmac.Hash(user.Remember)
+	//if user.Remember != "" {
+	//	user.RememberHash = us.hmac.Hash(user.Remember)
+	//} else {
+	//	token, err := rand.RememberToken()
+	//	user.RememberHash = us.hmac.Hash(token)
+	//}
 	return us.db.Create(user).Error
 }
 
 func (us *UserService) Delete(id uint) error {
-	if id == 0{
+	if id == 0 {
 		return ErrorInvalidId
 	}
 	user := User{Model: gorm.Model{ID: id}}
 	return us.db.Delete(&user).Error
 }
-
 
 func first(db *gorm.DB, dst interface{}) error {
 	err := db.First(dst).Error
@@ -133,7 +165,6 @@ func all(db *gorm.DB, dst interface{}) error {
 	return err
 }
 
-
 func (us *UserService) ById(id uint) (*User, error) {
 	var user User
 	db := us.db.Where("id = ?", id)
@@ -147,9 +178,11 @@ func (us *UserService) Close() error {
 
 type User struct {
 	gorm.Model
-	Name string
-	Email string `gorm:"not null; unique_index"`
-	Age uint8
-	Password string `gorm:"-"`
+	Name         string
+	Email        string `gorm:"not null; unique_index"`
+	Age          uint8
+	Password     string `gorm:"-"`
 	PasswordHash string `gorm:"size:60; not null"`
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
 }
