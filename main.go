@@ -28,7 +28,7 @@ func main() {
 	}
 	defer us.Close()
 	//us.DestructiveReset();
-	us.AutoMigrate()
+	//us.AutoMigrate()
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(us)
 	galleriesC := controllers.NewGallery()

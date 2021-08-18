@@ -78,8 +78,10 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case models.ErrorNotFound:
+			http.Redirect(w, r, "/login", http.StatusFound)
 			fmt.Fprintln(w, "Invalid email address.")
 		case models.ErrorInvalidPassword:
+			http.Redirect(w, r, "/login", http.StatusFound)
 			fmt.Fprintln(w, "Invalid password provided")
 		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -96,7 +98,8 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("remember_token")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/login", http.StatusFound)
+		//http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	user, err := u.us.ByRemember(cookie.Value)
@@ -127,6 +130,13 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 		Value: user.Remember,
 		HttpOnly: true,
 	}
+
+	nameCookie := http.Cookie{
+		Name: "user_name",
+		Value: user.Name,
+		HttpOnly: true,
+	}
 	http.SetCookie(w, &cookie)
+	http.SetCookie(w, &nameCookie)
 	return nil
 }
