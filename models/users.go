@@ -124,8 +124,14 @@ func (uv *userValidator) Update(user *User) error {
 }
 
 func (uv *userValidator) Delete(id uint) error {
-	if id == 0 {
-		return ErrorInvalidId
+	user := User{
+		Model: gorm.Model{
+			ID: id,
+		},
+	}
+	err := runUserValFuncs(&user, uv.idGreaterThan(0))
+	if err != nil {
+		return err
 	}
 	return uv.UserDB.Delete(id)
 }
@@ -162,6 +168,22 @@ func (uv *userValidator) defaultRemember(user *User) error {
 	}
 	user.Remember = token
 	return nil
+}
+
+//func (uv *userValidator) idGreaterThanZero(user *User) error {
+//	if user.ID <= 0 {
+//		return ErrorInvalidId
+//	}
+//	return nil
+//}
+
+func (uv *userValidator) idGreaterThan(u uint) userValFunc {
+	return userValFunc(func(user *User) error {
+		if user.ID <= u {
+			return ErrorInvalidId
+		}
+		return nil
+	})
 }
 
 func (ug *userGorm) Test() string {
