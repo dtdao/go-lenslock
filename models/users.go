@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm/logger"
 	"lenslocked.com/hash"
 	"lenslocked.com/rand"
+	"strings"
 )
 
 var (
@@ -101,7 +102,7 @@ func (uv *userValidator) ByRemember(token string) (*User, error) {
 }
 
 func (uv *userValidator) CreateUser(user *User) error {
-	err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember)
+	err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember, uv.normalizeEmail)
 	if err != nil {
 		return err
 	}
@@ -116,7 +117,7 @@ func (uv *userValidator) CreateUser(user *User) error {
 }
 
 func (uv *userValidator) Update(user *User) error {
-	err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember)
+	err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail)
 	if err != nil {
 		return err
 	}
@@ -186,6 +187,12 @@ func (uv *userValidator) idGreaterThan(u uint) userValFunc {
 	})
 }
 
+func (uv *userValidator) normalizeEmail(user *User) error {
+	user.Email = strings.ToLower(user.Email)
+	user.Email = strings.TrimSpace(user.Email)
+	return nil
+}
+
 func (ug *userGorm) Test() string {
 	return "hello"
 }
@@ -213,6 +220,16 @@ func (ug *userGorm) ByEmail(email string) (*User, error) {
 	db := ug.db.Where("email = ?", email)
 	err := first(db, &user)
 	return &user, err
+}
+
+func (uv *userValidator) ByEmail(email string) (*User, error) {
+	user := User{
+		Email: email,
+	}
+	if err := runUserValFuncs(&user, uv.normalizeEmail); err != nil {
+		return nil, err
+	}
+	return uv.UserDB.ByEmail(email)
 }
 
 // ByRemember looks up a user with a given remember token
