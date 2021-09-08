@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm/logger"
 	"lenslocked.com/hash"
 	"lenslocked.com/rand"
+	"regexp"
 	"strings"
 )
 
@@ -15,6 +16,8 @@ var (
 	ErrorNotFound        = errors.New("models: resource not found")
 	ErrorInvalidId       = errors.New("models: ID provided is invalid")
 	ErrorInvalidPassword = errors.New("modals: Incorrect password provided")
+	ErrEmailRequired     = errors.New("Email address is required")
+	ErrEmailInvalid      = errors.New("Email address is not valid")
 	//ErrorInvalidEmail = errors.New("models: Incorerect email provided")
 )
 
@@ -84,9 +87,18 @@ func runUserValFuncs(user *User, fns ...userValFunc) error {
 	return nil
 }
 
+func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
+	return &userValidator{
+		UserDB:     udb,
+		hmac:       hmac,
+		emailRegex: regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
+	}
+}
+
 type userValidator struct {
 	UserDB
-	hmac hash.HMAC
+	hmac       hash.HMAC
+	emailRegex *regexp.Regexp
 }
 
 func (uv *userValidator) ByRemember(token string) (*User, error) {
@@ -102,7 +114,13 @@ func (uv *userValidator) ByRemember(token string) (*User, error) {
 }
 
 func (uv *userValidator) CreateUser(user *User) error {
-	err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail)
+	err := runUserValFuncs(user,
+		uv.bcryptPassword,
+		uv.defaultRemember,
+		uv.hmacRemember,
+		uv.normalizeEmail,
+		uv.requireEmail,
+		uv.emailFormat)
 	if err != nil {
 		return err
 	}
@@ -117,7 +135,13 @@ func (uv *userValidator) CreateUser(user *User) error {
 }
 
 func (uv *userValidator) Update(user *User) error {
-	err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail)
+	err := runUserValFuncs(user,
+		uv.bcryptPassword,
+		uv.hmacRemember,
+		uv.normalizeEmail,
+		uv.requireEmail,
+		uv.emailFormat,
+	)
 	if err != nil {
 		return err
 	}
@@ -195,7 +219,14 @@ func (uv *userValidator) normalizeEmail(user *User) error {
 
 func (uv *userValidator) requireEmail(user *User) error {
 	if user.Email == "" {
-		return errors.New("Email address is required")
+		return ErrEmailRequired
+	}
+	return nil
+}
+
+func (uv *userValidator) emailFormat(user *User) error {
+	if !uv.emailRegex.MatchString(user.Email) {
+		return ErrEmailInvalid
 	}
 	return nil
 }
