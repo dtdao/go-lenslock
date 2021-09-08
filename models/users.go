@@ -18,6 +18,7 @@ var (
 	ErrorInvalidPassword = errors.New("modals: Incorrect password provided")
 	ErrEmailRequired     = errors.New("Email address is required")
 	ErrEmailInvalid      = errors.New("Email address is not valid")
+	ErrEmailIsTaken      = errors.New("models: email address is already taken")
 	//ErrorInvalidEmail = errors.New("models: Incorerect email provided")
 )
 
@@ -120,7 +121,9 @@ func (uv *userValidator) CreateUser(user *User) error {
 		uv.hmacRemember,
 		uv.normalizeEmail,
 		uv.requireEmail,
-		uv.emailFormat)
+		uv.emailFormat,
+		uv.emailIsAvail,
+	)
 	if err != nil {
 		return err
 	}
@@ -141,6 +144,7 @@ func (uv *userValidator) Update(user *User) error {
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emailFormat,
+		uv.emailIsAvail,
 	)
 	if err != nil {
 		return err
@@ -227,6 +231,21 @@ func (uv *userValidator) requireEmail(user *User) error {
 func (uv *userValidator) emailFormat(user *User) error {
 	if !uv.emailRegex.MatchString(user.Email) {
 		return ErrEmailInvalid
+	}
+	return nil
+}
+
+func (uv *userValidator) emailIsAvail(user *User) error {
+	existing, err := uv.ByEmail(user.Email)
+	if err == ErrorNotFound {
+		// Email is not taken
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if user.ID != existing.ID {
+		return ErrEmailIsTaken
 	}
 	return nil
 }
@@ -319,10 +338,7 @@ func NewUserService(connectionInfo string) (*userService, error) {
 		return nil, err
 	}
 	hmac := hash.NewHMAC(hmacSecretKey)
-	uv := &userValidator{
-		hmac:   hmac,
-		UserDB: ug,
-	}
+	uv := newUserValidator(ug, hmac)
 	return &userService{
 		UserDB: uv,
 	}, nil
