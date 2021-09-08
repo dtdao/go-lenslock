@@ -102,7 +102,7 @@ func (uv *userValidator) ByRemember(token string) (*User, error) {
 }
 
 func (uv *userValidator) CreateUser(user *User) error {
-	err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember, uv.normalizeEmail)
+	err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (uv *userValidator) CreateUser(user *User) error {
 }
 
 func (uv *userValidator) Update(user *User) error {
-	err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail)
+	err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail)
 	if err != nil {
 		return err
 	}
@@ -190,6 +190,13 @@ func (uv *userValidator) idGreaterThan(u uint) userValFunc {
 func (uv *userValidator) normalizeEmail(user *User) error {
 	user.Email = strings.ToLower(user.Email)
 	user.Email = strings.TrimSpace(user.Email)
+	return nil
+}
+
+func (uv *userValidator) requireEmail(user *User) error {
+	if user.Email == "" {
+		return errors.New("Email address is required")
+	}
 	return nil
 }
 
