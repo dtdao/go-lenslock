@@ -21,6 +21,8 @@ var (
 	ErrorEmailIsTaken      = errors.New("models: email address is already taken")
 	ErrorPasswordTooShort  = errors.New("models: passwords must be at least 8 characters long")
 	ErrorPasswordRequired  = errors.New("models: passwords is required")
+	ErrorRememberTooShort  = errors.New("models: remember token must be at least 32 bytes")
+	ErrorRememberRequired  = errors.New("models: remember token is required")
 )
 
 const userPwPepper = "randomPepperForThePizza"
@@ -122,7 +124,9 @@ func (uv *userValidator) CreateUser(user *User) error {
 		uv.bcryptPassword,
 		uv.passwordHashRequired,
 		uv.defaultRemember,
+		uv.rememberMinBytes,
 		uv.hmacRemember,
+		uv.rememberHashRequired,
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emailFormat,
@@ -146,7 +150,9 @@ func (uv *userValidator) Update(user *User) error {
 		uv.passwordMinLength,
 		uv.bcryptPassword,
 		uv.passwordHashRequired,
+		uv.rememberMinBytes,
 		uv.hmacRemember,
+		uv.rememberHashRequired,
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emailFormat,
@@ -185,6 +191,13 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 	return nil
 }
 
+func (uv *userValidator) rememberHashRequired(user *User) error {
+	if user.RememberHash == "" {
+		return ErrorRememberRequired
+	}
+	return nil
+}
+
 func (uv *userValidator) hmacRemember(user *User) error {
 	if user.Remember == "" {
 		return nil
@@ -193,6 +206,7 @@ func (uv *userValidator) hmacRemember(user *User) error {
 	return nil
 }
 
+// setRememberIfUnset
 func (uv *userValidator) defaultRemember(user *User) error {
 	if user.Remember != "" {
 		return nil
@@ -211,6 +225,20 @@ func (uv *userValidator) defaultRemember(user *User) error {
 //	}
 //	return nil
 //}
+
+func (uv *userValidator) rememberMinBytes(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+	n, err := rand.NBytes(user.Remember)
+	if err != nil {
+		return err
+	}
+	if n < 32 {
+		return ErrorRememberTooShort
+	}
+	return nil
+}
 
 func (uv *userValidator) idGreaterThan(u uint) userValFunc {
 	return userValFunc(func(user *User) error {

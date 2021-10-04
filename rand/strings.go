@@ -8,7 +8,7 @@ import (
 
 const RememberTokenBytes = 32
 
-func Bytes(n int) ([]byte, error){
+func Bytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
 	if err != nil {
@@ -22,12 +22,22 @@ func Bytes(n int) ([]byte, error){
 // of that byte slice
 func String(nBytes int) (string, error) {
 	b, err := Bytes(nBytes)
-	if err !=nil {
+	if err != nil {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-func RememberToken() (string, error){
+// NBytes returns the number of bytes used in the base64 url encoded
+// string
+func NBytes(base64String string) (int, error) {
+	b, err := base64.URLEncoding.DecodeString(base64String)
+	if err != nil {
+		return -1, err
+	}
+	return len(b), nil
+}
+
+func RememberToken() (string, error) {
 	return String(RememberTokenBytes)
 }
