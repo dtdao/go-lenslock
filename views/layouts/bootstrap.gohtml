@@ -1,25 +1,26 @@
 {{define "bootstrap"}}
-<!doctype html>
-<html lang="en">
-  <head>
-    <title>Lenslocked</title>
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <title>Lenslocked</title>
         <!-- Bootstrap core CSS -->
- <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"/>
 
-    <!-- Custom styles for this template -->
-  </head>
-  <body>
-     {{template "navbar"}}
+        <!-- Custom styles for this template -->
+    </head>
+    <body>
+    {{template "navbar"}}
     <div class="container-fluid">
-     {{template "yield" .}}
-     {{template "footer"}}
+        {{template "alert"}}
+        {{template "yield" .}}
+        {{template "footer"}}
     </div>
 
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js">
     </script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js">
-    </script>  
-  </body>
-</html>
+    </script>
+    </body>
+    </html>
 {{end}}
