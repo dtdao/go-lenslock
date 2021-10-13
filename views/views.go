@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	TemplateDir string ="views/"
-	LayoutDir string = "views/layouts/"
+	TemplateDir string = "views/"
+	LayoutDir   string = "views/layouts/"
 	TemplateExt string = ".gohtml"
 )
 
@@ -22,18 +22,18 @@ func NewView(layout string, files ...string) *View {
 		panic(err)
 	}
 
-	return &View {
+	return &View{
 		Template: t,
-		Layout: layout,
+		Layout:   layout,
 	}
 }
 
 type View struct {
 	Template *template.Template
-	Layout string
+	Layout   string
 }
 
-func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request){
+func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	if err := v.Render(w, nil); err != nil {
 		panic(err)
@@ -42,11 +42,20 @@ func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request){
 
 // render is used to render the view with the predefined layout
 func (v *View) Render(w http.ResponseWriter, data interface{}) error {
+	w.Header().Set("Content-Type", "text/html")
+	switch data.(type) {
+	case Data:
+	// do nothing
+	default:
+		data = Data{
+			Yield: data,
+		}
+	}
 	return v.Template.ExecuteTemplate(w, v.Layout, data)
 }
 
 func layoutFiles() []string {
-	files, err := filepath.Glob(LayoutDir+"*"+TemplateExt)
+	files, err := filepath.Glob(LayoutDir + "*" + TemplateExt)
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +69,7 @@ func addTemplatePath(files []string) {
 	}
 }
 
-func addTemplateExt(files []string){
+func addTemplateExt(files []string) {
 	for i, f := range files {
 		files[i] = f + TemplateExt
 	}
