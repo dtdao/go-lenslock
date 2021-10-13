@@ -31,7 +31,18 @@ func NewUsers(us models.UserService) *Users {
 }
 
 func (u *Users) New(w http.ResponseWriter, r *http.Request) {
-	u.NewView.Render(w, nil)
+	type Alert struct {
+		Level   string
+		Message string
+	}
+
+	a := Alert{
+		Level:   "success",
+		Message: "successfully rendered a dynamic alert",
+	}
+	if err := u.NewView.Render(w, a); err != nil {
+		panic(err)
+	}
 }
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
@@ -126,14 +137,14 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 		}
 	}
 	cookie := http.Cookie{
-		Name:  "remember_token",
-		Value: user.Remember,
+		Name:     "remember_token",
+		Value:    user.Remember,
 		HttpOnly: true,
 	}
 
 	nameCookie := http.Cookie{
-		Name: "user_name",
-		Value: user.Name,
+		Name:     "user_name",
+		Value:    user.Name,
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
