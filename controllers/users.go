@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"lenslocked.com/rand"
+	"log"
 	"net/http"
 
 	"lenslocked.com/models"
@@ -37,9 +38,18 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	var form SignupForm
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		log.Println(err)
+		vd.Alert = &views.Alert{
+			Level:   views.AlertLvlError,
+			Message: views.AlertMsgGeneric,
+		}
+		if err = u.NewView.Render(w, vd); err != nil {
+			panic(err)
+		}
+		return
 	}
 
 	user := models.User{
@@ -50,13 +60,22 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := u.us.CreateUser(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		vd.Alert = &views.Alert{
+			Level: views.AlertLvlError,
+			Message: err.Error(),
+		}
+		if err = u.NewView.Render(w, vd); err != nil {
+			panic(err)
+		}
+		//http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err := u.signIn(w, &user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/login", http.StatusFound)
+		//http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 	// fmt.Fprintln(w, r.PostForm["email"])
