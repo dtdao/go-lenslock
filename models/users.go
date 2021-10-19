@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -10,19 +9,6 @@ import (
 	"lenslocked.com/rand"
 	"regexp"
 	"strings"
-)
-
-var (
-	ErrorNotFound          = errors.New("models: resource not found")
-	ErrorIDInvalid         = errors.New("models: ID provided is invalid")
-	ErrorPasswordIncorrect = errors.New("modals: Incorrect password provided")
-	ErrorEmailRequired     = errors.New("Email address is required")
-	ErrorEmailInvalid      = errors.New("Email address is not valid")
-	ErrorEmailIsTaken      = errors.New("models: email address is already taken")
-	ErrorPasswordTooShort  = errors.New("models: passwords must be at least 8 characters long")
-	ErrorPasswordRequired  = errors.New("models: passwords is required")
-	ErrorRememberTooShort  = errors.New("models: remember token must be at least 32 bytes")
-	ErrorRememberRequired  = errors.New("models: remember token is required")
 )
 
 const userPwPepper = "randomPepperForThePizza"
