@@ -32,9 +32,7 @@ func NewUsers(us models.UserService) *Users {
 }
 
 func (u *Users) New(w http.ResponseWriter, r *http.Request) {
-	if err := u.NewView.Render(w, nil); err != nil {
-		panic(err)
-	}
+	u.NewView.Render(w, nil);
 }
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
@@ -43,9 +41,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		vd.SetAlert(err)
-		if err = u.NewView.Render(w, vd); err != nil {
-			panic(err)
-		}
+		u.NewView.Render(w, vd)
 		return
 	}
 
@@ -58,9 +54,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err := u.us.CreateUser(&user); err != nil {
 		vd.SetAlert(err)
-		if err = u.NewView.Render(w, vd); err != nil {
-			panic(err)
-		}
+		u.NewView.Render(w, vd);
 		//http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
