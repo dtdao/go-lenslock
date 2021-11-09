@@ -2,9 +2,7 @@ package models
 
 import (
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"lenslocked.com/hash"
 	"lenslocked.com/rand"
 	"regexp"
@@ -44,17 +42,17 @@ type UserService interface {
 	UserDB
 }
 
-func newUserGorm(connectionInfo string) (*userGorm, error) {
-	db, err := gorm.Open(postgres.Open(connectionInfo), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		panic(err)
-	}
-	return &userGorm{
-		db: db,
-	}, nil
-}
+//func newUserGorm(connectionInfo string) (*userGorm, error) {
+//	db, err := gorm.Open(postgres.Open(connectionInfo), &gorm.Config{
+//		Logger: logger.Default.LogMode(logger.Info),
+//	})
+//	if err != nil {
+//		panic(err)
+//	}
+//	return &userGorm{
+//		db: db,
+//	}, nil
+//}
 
 var _ UserDB = &userGorm{}
 
@@ -376,17 +374,13 @@ func (ug *userGorm) InAgeRange(min uint8, max uint8) ([]User, error) {
 	return users, err
 }
 
-func NewUserService(connectionInfo string) (*userService, error) {
-	ug, err := newUserGorm(connectionInfo)
-	if err != nil {
-		return nil, err
-	}
+func NewUserService(db *gorm.DB) UserService  {
+	ug := &userGorm{db}
 	hmac := hash.NewHMAC(hmacSecretKey)
 	uv := newUserValidator(ug, hmac)
 	return &userService{
 		UserDB: uv,
-	}, nil
-
+	}
 }
 
 func (ug *userGorm) Delete(id uint) error {

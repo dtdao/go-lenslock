@@ -22,22 +22,23 @@ func main() {
 	host, port, user, password, dbname)
    
    
-	us, err := models.NewUserService(psqlInfo)
+	services, err := models.NewServices(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	defer us.Close()
+	// Todo fix this
+	//defer us.Close()
 	//us.DestructiveReset();
 	//us.AutoMigrate()
 	staticC := controllers.NewStatic()
-	usersC := controllers.NewUsers(us)
+	usersC := controllers.NewUsers(services.User)
 	galleriesC := controllers.NewGallery()
 
-	userByAge, err := us.InAgeRange(99, 100); 
+	//userByAge, err := services.InAgeRange(99, 100);
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(userByAge)
+	//fmt.Println(userByAge)
 
 
 	r := mux.NewRouter()

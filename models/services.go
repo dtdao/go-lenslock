@@ -14,10 +14,12 @@ func NewServices(connectionInfo string) (*Services, error) {
 		return nil, err
 	}
 	db.Config.Logger.LogMode(logger.Info)
-	return &Services{}, nil
+	return &Services{
+		User: NewUserService(db),
+	}, nil
 }
 
 type Services struct {
-	GalleryService GallerySerivce
+	GalleryService GalleryService
 	User           UserService
 }
