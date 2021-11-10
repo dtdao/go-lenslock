@@ -16,6 +16,7 @@ func NewServices(connectionInfo string) (*Services, error) {
 	db.Config.Logger.LogMode(logger.Info)
 	return &Services{
 		User: NewUserService(db),
+		GalleryService: NewGalleryService(db),
 	}, nil
 }
 
