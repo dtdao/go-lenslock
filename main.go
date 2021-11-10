@@ -32,7 +32,7 @@ func main() {
 	//us.AutoMigrate()
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(services.User)
-	galleriesC := controllers.NewGallery()
+	galleriesC := controllers.NewGalleries(services.GalleryService)
 
 	//userByAge, err := services.InAgeRange(99, 100);
 	if err != nil {
@@ -45,7 +45,7 @@ func main() {
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.Handle("/faq", staticC.Faq).Methods("GET")
-	r.Handle("/galleries/new", galleriesC.NewGallery).Methods("GET")
+	r.Handle("/galleries/new", galleriesC.New).Methods("GET")
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 
 	// r.HandleFunc("/faq", faq).Methods("GET")

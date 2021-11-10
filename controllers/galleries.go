@@ -1,21 +1,39 @@
-package controllers
+package  controllers
 
 import (
-	"net/http"
-
+	"lenslocked.com/models"
 	"lenslocked.com/views"
 )
 
-type Galleries struct {
-	NewGallery *views.View
-}
-
-func NewGallery() *Galleries {
+func NewGalleries(gs models.GalleryService) *Galleries {
 	return &Galleries{
-		NewGallery: views.NewView("bootstrap", "galleries/new"),
+		New:   views.NewView("bootstrap", "galleries/new"),
+		gs:        gs,
 	}
 }
 
-func (g *Galleries) New(w http.ResponseWriter, r *http.Request) {
-	g.NewGallery.Render(w, nil)
+type Galleries struct {
+	New *views.View
+	gs models.GalleryService
 }
+//package controllers
+//
+//import (
+//	"net/http"
+//
+//	"lenslocked.com/views"
+//)
+//
+//type Galleries struct {
+//	NewGallery *views.View
+//}
+//
+//func NewGallery() *Galleries {
+//	return &Galleries{
+//		NewGallery: views.NewView("bootstrap", "galleries/new"),
+//	}
+//}
+//
+//func (g *Galleries) New(w http.ResponseWriter, r *http.Request) {
+//	g.NewGallery.Render(w, nil)
+//}
