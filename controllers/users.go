@@ -118,7 +118,7 @@ func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := u.us.ByRemember(cookie.Value)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 	//fmt.Fprintln(w, "Email is:", cookie.Value)

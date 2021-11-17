@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"lenslocked.com/middleware"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -10,18 +11,17 @@ import (
 )
 
 const (
-	host = "localhost"
-	port = 5432
-	user = "dong"
+	host     = "localhost"
+	port     = 5432
+	user     = "dong"
 	password = "password"
-	dbname = "lenslocked_dev"
+	dbname   = "lenslocked_dev"
 )
 
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-	host, port, user, password, dbname)
-   
-   
+		host, port, user, password, dbname)
+
 	services, err := models.NewServices(psqlInfo)
 	if err != nil {
 		panic(err)
@@ -33,19 +33,22 @@ func main() {
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(services.User)
 	galleriesC := controllers.NewGalleries(services.GalleryService)
-
+	requireUserMw := middleware.RequireUser{
+		UserService: services.User,
+	}
 	//userByAge, err := services.InAgeRange(99, 100);
 	if err != nil {
 		panic(err)
 	}
 	//fmt.Println(userByAge)
 
-
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.Handle("/faq", staticC.Faq).Methods("GET")
-	r.Handle("/galleries/new", galleriesC.New).Methods("GET")
+
+
+	r.Handle("/galleries/new", requireUserMw.Apply(galleriesC.New)).Methods("GET")
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 
 	// r.HandleFunc("/faq", faq).Methods("GET")
@@ -53,10 +56,9 @@ func main() {
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
-	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
+	r.HandleFunc("/galleries", requireUserMw.ApplyFn(galleriesC.Create)).Methods("POST")
 	http.ListenAndServe(":3000", r)
 }
-
 
 // func must(err error){
 // 	if err != nil {
