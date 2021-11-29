@@ -13,6 +13,7 @@ type GalleryService interface {
 }
 type GalleryDB interface {
 	Create(gallery *Gallery) error
+	ById(id uint) (*Gallery, error)
 }
 
 type galleryService struct {
@@ -32,6 +33,13 @@ var _ GalleryDB = &galleryGorm{}
 
 type galleryGorm struct {
 	db *gorm.DB
+}
+
+func (gg *galleryGorm) ById(id uint) (*Gallery, error) {
+	var gallery Gallery
+	db := gg.db.Where("id = ?", id)
+	err := first(db, &gallery)
+	return &gallery, err
 }
 
 func (gv *galleryValidator) Create(gallery *Gallery) error {

@@ -32,7 +32,8 @@ func main() {
 	//us.AutoMigrate()
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(services.User)
-	galleriesC := controllers.NewGalleries(services.GalleryService)
+	r := mux.NewRouter()
+	galleriesC := controllers.NewGalleries(services.GalleryService, r)
 	requireUserMw := middleware.RequireUser{
 		UserService: services.User,
 	}
@@ -42,13 +43,13 @@ func main() {
 	}
 	//fmt.Println(userByAge)
 
-	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.Handle("/faq", staticC.Faq).Methods("GET")
 
 
 	r.Handle("/galleries/new", requireUserMw.Apply(galleriesC.New)).Methods("GET")
+	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesC.Show).Methods("GET").Name("show_gallery")
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 
 	// r.HandleFunc("/faq", faq).Methods("GET")
