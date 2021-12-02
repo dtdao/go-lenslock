@@ -15,6 +15,7 @@ func NewGalleries(gs models.GalleryService, r *mux.Router) *Galleries {
 	return &Galleries{
 		New:      views.NewView("bootstrap", "galleries/new"),
 		ShowView: views.NewView("bootstrap", "galleries/show"),
+		EditView: views.NewView("bootstrap", "galleries/edit"),
 		gs:       gs,
 		r:        r,
 	}
@@ -25,31 +26,33 @@ type GalleryForm struct {
 }
 
 func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-	id, err := strconv.Atoi(idStr)
+	gallery, err := g.galleryById(w, r)
 	if err != nil {
-		http.Error(w, "Invalid Gallery Id", http.StatusNotFound)
-	}
-	gallery, err := g.gs.ById(uint(id))
-	if err != nil {
-		switch err {
-		case models.ErrorNotFound:
-			http.Error(w, "Gallery not found ", http.StatusNotFound)
-		default:
-			http.Error(w, "Whoops. Something went wrong", http.StatusInternalServerError)
-		}
 		return
 	}
 	var vd views.Data
 	vd.Yield = gallery
 	g.ShowView.Render(w, vd)
-	fmt.Fprintln(w, gallery)
 }
 
+func (g *Galleries) Edit(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryById(w, r)
+	if err != nil {
+		return
+	}
+	user := context.User(r.Context())
+	if gallery.UserId != user.ID {
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+	var vd views.Data
+	vd.Yield = gallery
+	g.EditView.Render(w, vd)
+}
 type Galleries struct {
 	New      *views.View
 	ShowView *views.View
+	EditView *views.View
 	gs       models.GalleryService
 	r        *mux.Router
 }
@@ -87,7 +90,29 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.Path, http.StatusFound)
 	fmt.Fprintln(w, gallery)
 }
-
+func (g *Galleries) galleryById(w http.ResponseWriter, r *http.Request) (*models.Gallery, error){
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid Gallery Id", http.StatusNotFound)
+		return nil, err
+	}
+	gallery, err := g.gs.ById(uint(id))
+	if err != nil {
+		switch err {
+		case models.ErrorNotFound:
+			http.Error(w, "Gallery not found ", http.StatusNotFound)
+		default:
+			http.Error(w, "Whoops. Something went wrong", http.StatusInternalServerError)
+		}
+		return nil, err
+	}
+	var vd views.Data
+	vd.Yield = gallery
+	g.ShowView.Render(w, vd)
+	return gallery, nil
+}
 //package controllers
 //
 //import (
