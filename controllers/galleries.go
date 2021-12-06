@@ -35,6 +35,30 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 	g.ShowView.Render(w, vd)
 }
 
+func (g *Galleries) Update(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryById(w, r)
+	if err != nil {
+		return
+	}
+	user := context.User(r.Context())
+	if gallery.UserId != user.ID {
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+	var vd views.Data
+	var form GalleryForm
+	vd.Yield = gallery
+
+	if err := parseForm(r, &form); err != nil {
+		log.Println(err)
+		vd.SetAlert(err)
+		g.EditView.Render(w, vd)
+		return
+	}
+	gallery.Title = form.Title
+	fmt.Fprintln(w, gallery)
+}
+
 func (g *Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 	gallery, err := g.galleryById(w, r)
 	if err != nil {
@@ -49,6 +73,7 @@ func (g *Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 	vd.Yield = gallery
 	g.EditView.Render(w, vd)
 }
+
 type Galleries struct {
 	New      *views.View
 	ShowView *views.View
@@ -90,7 +115,7 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.Path, http.StatusFound)
 	fmt.Fprintln(w, gallery)
 }
-func (g *Galleries) galleryById(w http.ResponseWriter, r *http.Request) (*models.Gallery, error){
+func (g *Galleries) galleryById(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -113,6 +138,7 @@ func (g *Galleries) galleryById(w http.ResponseWriter, r *http.Request) (*models
 	g.ShowView.Render(w, vd)
 	return gallery, nil
 }
+
 //package controllers
 //
 //import (
