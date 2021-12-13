@@ -63,7 +63,7 @@ func (g *Galleries) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	vd.Alert = &views.Alert{
-		Level: views.AlertLvlSuccess,
+		Level:   views.AlertLvlSuccess,
 		Message: "Gallery successfully updated!",
 	}
 	g.EditView.Render(w, vd)
@@ -148,6 +148,27 @@ func (g *Galleries) galleryById(w http.ResponseWriter, r *http.Request) (*models
 	vd.Yield = gallery
 	g.ShowView.Render(w, vd)
 	return gallery, nil
+}
+func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryById(w, r)
+	if err != nil {
+		return
+	}
+	user := context.User(r.Context())
+	if gallery.UserId != user.ID {
+		http.Error(w, "Gallery no found", http.StatusNotFound)
+		return
+	}
+	var vd views.Data
+	g.gs.Delete(gallery.ID)
+	if err != nil {
+		vd.SetAlert(err)
+		vd.Yield = gallery
+		g.EditView.Render(w, vd)
+		return
+	}
+	// TODO redirec to index
+	fmt.Fprintln(w, "successfully deleted!")
 }
 
 //package controllers
